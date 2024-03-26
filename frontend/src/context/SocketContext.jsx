@@ -17,7 +17,7 @@ export const SockectConextProvider = ({children})=>{
 
     useEffect(()=>{
         if(authUser){
-            const socket = io("http://localhost:3000",{
+            const socket = io("http://localhost:5000",{
                 query:{
                     userId:authUser._id
                 }
@@ -25,7 +25,7 @@ export const SockectConextProvider = ({children})=>{
 
             setSocket(socket);
             
-            socket.on("getOnlineUsers",(users)=>{
+            socket.on("getOnlineUser",(users)=>{
                 setOnlineUser(users)
             })
 
