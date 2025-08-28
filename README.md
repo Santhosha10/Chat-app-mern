@@ -28,7 +28,6 @@ https://chat-app-mern-s97e.onrender.com/
 - Node.js
 - Express.js
 - MongoDB (with Mongoose ORM)
-- Socket.io (WebSocket library for real-time communication)
 - **Other Tools:**
 - Git (version control)
 
@@ -39,3 +38,4 @@ This project is licensed under the MIT License.
 ## Contact
 
 If you have any questions or suggestions regarding the MERN Mini Chat App, feel free to contact at .
+
