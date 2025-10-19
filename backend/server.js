@@ -1,35 +1,60 @@
-import  express  from 'express';
-import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser'; 
-import path from 'path';
-import authRoutes from './routes/auth.routes.js';
-import messageRoutes from './routes/message.routes.js';
-import userRoutes from './routes/user.routes.js';
+import { Server } from "socket.io";
+import http from "http";
+import express from "express";
+import cors from "cors";
 
-import connectToMongoDB from './DB/mongoDB.js';
-import { app,server } from './socket/socket.js';
+const app = express();
 
+// ✅ Add explicit CORS middleware for normal REST routes
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://chat-app-mern-s97e.onrender.com", // your frontend URL on Render
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
+
+const server = http.createServer(app);
+
+// ✅ Allow WebSocket + credentials
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "https://chat-app-mern-s97e.onrender.com",
+    ],
+    methods: ["GET", "POST"],
+    credentials: true, // 🔥 must be here for socket auth & cookies
+  },
+});
+
+const userSocketMap = {}; // { userId: socketId }
+
+export const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
+
+io.on("connection", (socket) => {
+  const userId = socket.handshake.query.userId;
+  if (!userId) return;
+
+  console.log(`🟢 User connected: ${userId}`);
+
+  userSocketMap[userId] = socket.id;
+
+  // Notify all clients
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("disconnect", () => {
+    console.log(`🔴 User disconnected: ${userId}`);
+    delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+});
+
+// ✅ Always listen with the same HTTP server used by Socket.IO
 const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-const __dirname = path.resolve()
-
-
-dotenv.config();
-app.use(express.json());
-app.use(cookieParser());
-
-
-//routes
-app.use('/api/auth', authRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/users', userRoutes);
-
-app.use(express.static(path.join(__dirname, "/frontend/dist")));
-app.get('*',(req,res)=>{
-    res.sendFile(path.join(__dirname,"frontend","dist","index.html"))
-})
-
-server.listen(PORT,()=>{
-    connectToMongoDB();
-    console.log(`Server is Running in ${PORT}`)
-})
+export { app, io, server };
