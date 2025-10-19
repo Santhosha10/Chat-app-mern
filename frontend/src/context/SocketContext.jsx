@@ -24,6 +24,9 @@ export const SockectConextProvider = ({ children }) => {
         query: { userId: authUser._id.toString() },
       });
 
+
+      console.log(SERVER_URL);
+
       setSocket(newSocket);
 
       newSocket.on("getOnlineUsers", (users) => {
@@ -41,3 +44,4 @@ export const SockectConextProvider = ({ children }) => {
     </SockectConext.Provider>
   );
 };
+
