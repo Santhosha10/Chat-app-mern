@@ -1,46 +1,38 @@
-import { createContext, useEffect, useState ,useContext} from "react";
+import { createContext, useEffect, useState, useContext } from "react";
 import { useAuthContext } from "./AuthContext";
-import io from 'socket.io-client'
+import io from "socket.io-client";
 
- const SockectConext  = createContext();
+const SockectConext = createContext();
 
 export const useSocketContext = () => {
-	return useContext(SockectConext);
+  return useContext(SockectConext);
 };
 
+export const SockectConextProvider = ({ children }) => {
+  const [socket, setSocket] = useState(null);
+  const [onlineUser, setOnlineUser] = useState([]);
+  const { authUser } = useAuthContext();
 
-export const SockectConextProvider = ({children})=>{
+  useEffect(() => {
+    if (authUser) {
+      const newSocket = io("http://localhost:5000", {
+        query: { userId: authUser._id.toString() },
+      });
 
-    const [socket, setSocket] =useState(null);
-    const [onlineUser, setOnlineUser] =useState([]);
-    const {authUser} = useAuthContext();
+      setSocket(newSocket);
 
-    useEffect(()=>{
-        if(authUser){
-            const socket = io("http://localhost:5000",{
-                query:{
-                    userId:authUser._id
-                }
-            });
+      newSocket.on("getOnlineUsers", (users) => {
+        console.log("online users:", users); // should now show connected users
+        setOnlineUser(users);
+      });
 
-            setSocket(socket);
-            
-            socket.on("getOnlineUser",(users)=>{
-                setOnlineUser(users)
-            })
+      return () => newSocket.disconnect();
+    }
+  }, [authUser]);
 
-            return ()=> socket.close()
-        }else{
-            if(socket) {
-                socket.close();
-                setSocket(null)
-            }
-        }
-    },[authUser])
-
-    return (
-        <SockectConext.Provider value={{socket,onlineUser}}>
-            {children}
-        </SockectConext.Provider>
-    )
-}
+  return (
+    <SockectConext.Provider value={{ socket, onlineUser }}>
+      {children}
+    </SockectConext.Provider>
+  );
+};

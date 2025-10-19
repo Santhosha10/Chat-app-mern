@@ -1,35 +1,42 @@
-import React, { useState } from 'react'
-import{BsSend} from 'react-icons/bs'
+import React, { useState } from 'react';
+import { BsSend } from 'react-icons/bs';
 import useSendMessage from '../../hooks/useSendMessage';
 
 const MessageInput = () => {
+  const [message, setMessage] = useState("");
+  const { loading, sendMessage } = useSendMessage();
 
-  const [message,setMessages] = useState("");
-  const {loading,sendMessage} = useSendMessage();
-
-  const handleSumbit= async (e)=>{
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if(!message) return;
+    if (!message.trim()) return;
 
     await sendMessage(message);
-    setMessages("")
-  }
+    setMessage("");
+  };
 
   return (
-    <form className='px-4 my-3' onSubmit={handleSumbit}>
-        <div className='w-full relative'>
-            <input type='text'
-              className='border text-sm rounded-lg block w-full p-2.5 bg-gray-700 text-white'
-              placeholder='type a message'
-              value={message}
-              onChange={(e)=> setMessages(e.target.value)}
-            />
-            <button type='submit' className='absolute inset-y-0 end-0 flex items-center pe-3'>
-                {loading ? <div className='loading loading-spinner'/> : <BsSend />}
-            </button> 
-        </div>
+    <form className="px-4 py-2 bg-gray-800" onSubmit={handleSubmit}>
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          className="w-full rounded-full bg-gray-700 text-white px-4 py-2 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="absolute right-0 flex items-center justify-center w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full text-white transition-colors duration-200"
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <BsSend className="text-lg" />
+          )}
+        </button>
+      </div>
     </form>
-  )
-}
+  );
+};
 
-export default MessageInput
+export default MessageInput;

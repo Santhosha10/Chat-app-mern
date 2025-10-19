@@ -1,40 +1,40 @@
-import React, { useEffect, useRef } from 'react'
-import Message from './Message'
-import useGetMessages  from "../../hooks/useGetMessages";
-import MessageSkeleton from '../../utils/MessagesSkeleton'
-import  useListenMessages  from '../../hooks/useListenMessages';
+import React, { useEffect, useRef } from "react";
+import Message from "./Message";
+import useGetMessages from "../../hooks/useGetMessages";
+import MessageSkeleton from "../../utils/MessagesSkeleton";
+import useListenMessages from "../../hooks/useListenMessages";
 
-
-const Messages=() => {
+const Messages = () => {
   useListenMessages();
-  const {messages,loading} = useGetMessages();
- 
-  const lastmessage = useRef();
+  const { messages, loading } = useGetMessages();
+  const lastMessageRef = useRef();
 
-
-  useEffect(()=>{
-    setTimeout(()=>{lastmessage.current?.scrollIntoView({behavour:'smooth'})},100)
-  },[messages])
+  // Scroll to the last message smoothly
+  useEffect(() => {
+    lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
-    <div className='px-7 py-4 flex-1 overflow-auto'>
+    <div className="flex-1 px-4 py-3 overflow-y-auto bg-gray-900 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+      
+      {/* Loading skeleton */}
+      {loading && [...Array(3)].map((_, idx) => <MessageSkeleton key={idx} />)}
 
-     {!loading && 
-      messages.length >0 
-      && messages.map((message)=> (
-        <div key={message._id}
-            ref={lastmessage}
-        >
-           <Message  message = {message} />
+      {/* Messages */}
+      {!loading && messages.length > 0 && messages.map((message) => (
+        <div key={message._id} ref={lastMessageRef}>
+          <Message message={message} />
         </div>
-      ))} 
+      ))}
 
-    {loading &&[...Array(3)].map((_,idx)=><MessageSkeleton key={idx} /> )}
-    {!loading && messages.length === 0 && (
-			<p className='text-center'>Send a message to start the conversation</p>
-		)}
+      {/* Empty state */}
+      {!loading && messages.length === 0 && (
+        <p className="text-center text-gray-400 mt-20">
+          Send a message to start the conversation
+        </p>
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default Messages
+export default Messages;
