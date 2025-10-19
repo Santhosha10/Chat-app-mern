@@ -15,14 +15,19 @@ export const SockectConextProvider = ({ children }) => {
 
   useEffect(() => {
     if (authUser) {
-      const newSocket = io("http://localhost:5000", {
+      const SERVER_URL =
+        process.env.NODE_ENV === "production"
+          ? "https://chat-app-backend.onrender.com" 
+          : "http://localhost:5000";
+
+      const newSocket = io(SERVER_URL, {
         query: { userId: authUser._id.toString() },
       });
 
       setSocket(newSocket);
 
       newSocket.on("getOnlineUsers", (users) => {
-        console.log("online users:", users); // should now show connected users
+        console.log("online users:", users);
         setOnlineUser(users);
       });
 
