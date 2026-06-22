@@ -1,6 +1,6 @@
-import React from "react";
 import useConversation from "../zustandStore/useConversation";
 import { useSocketContext } from "../context/SocketContext";
+import Avatar from "./Avatar";
 
 const Conversation = ({ conversation, lastIdx }) => {
   const { selectedConversation, setSelectedConversation } = useConversation();
@@ -14,33 +14,29 @@ const Conversation = ({ conversation, lastIdx }) => {
       <div
         onClick={() => setSelectedConversation(conversation)}
         className={`
-          flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-200
-          ${isSelected ? "bg-sky-500" : "hover:bg-sky-600"}
+          flex cursor-pointer items-center gap-3 rounded-md border p-3.5 transition md:border-transparent md:p-3
+          ${isSelected ? "app-button-primary" : "hover:bg-[color-mix(in_srgb,var(--app-accent)_10%,transparent)]"}
         `}
+        style={{ borderColor: isSelected ? "transparent" : "var(--app-border)" }}
       >
-        {/* Avatar */}
-        <div className="relative w-12 h-12">
-          <img
-            src={conversation.profilePic}
-            alt={`${conversation.fullName} avatar`}
-            className="w-full h-full rounded-full object-cover border-2 border-gray-600"
-          />
-          {isOnline && (
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full animate-pulse"></span>
-          )}
-        </div>
+        <Avatar
+          src={conversation.profilePic}
+          name={conversation.fullName}
+          isOnline={isOnline}
+          size="lg"
+        />
 
-        {/* Name & info */}
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <p className="text-gray-100 font-semibold truncate">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">
             {conversation.fullName}
           </p>
-          {/* You can add last message preview here if needed */}
+          <p className={`truncate text-xs ${isSelected ? "opacity-80" : "app-muted"}`}>
+            {isOnline ? "Online now" : "Offline"}
+          </p>
         </div>
       </div>
 
-      {/* Divider */}
-      {!lastIdx && <div className="border-b border-gray-700 mx-3"></div>}
+      {!lastIdx && <div className="mx-3 border-b" style={{ borderColor: "var(--app-border)" }}></div>}
     </>
   );
 };

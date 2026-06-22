@@ -1,26 +1,29 @@
-import React from 'react'
-
 const GenderCheckbox = ({onCheckboxChange,selectedGender}) => {
   return (
-    <div className='flex'>
-        <div className='form-control'>
-            <label className={`label gap-2 cursor-pointer ${selectedGender === "male" ? "selected" :""}`}>
-                <span className='label-text text-gray-800' >Male</span>
-                <input type='checkbox' className='checkbox border-slate-900'
-                    checked ={selectedGender ==="male"}
-                    onChange={(e)=>onCheckboxChange("male")}
-                />
-            </label>
-        </div>
-        <div className='form-control'>
-            <label className={`label gap-2 cursor-pointer ${selectedGender === "female" ? "selected" :""}`}>
-                <span className='label-text text-gray-800'>Female</span>
-                <input type='checkbox' className='checkbox border-slate-900'
-                checked ={selectedGender ==="female"}
-                onChange={(e)=>onCheckboxChange("female")}
-                />
-            </label>
-        </div>
+    <div>
+      <p className="mb-2 text-sm font-medium">Avatar style</p>
+      <div className="grid grid-cols-2 gap-3">
+        <label className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-3 text-sm transition ${selectedGender === "male" ? "app-button-primary" : "app-panel-strong"}`}>
+          <span>Male</span>
+          <input
+            type="radio"
+            name="gender"
+            className="radio radio-info radio-sm"
+            checked={selectedGender === "male"}
+            onChange={() => onCheckboxChange("male")}
+          />
+        </label>
+        <label className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-3 text-sm transition ${selectedGender === "female" ? "app-button-primary" : "app-panel-strong"}`}>
+          <span>Female</span>
+          <input
+            type="radio"
+            name="gender"
+            className="radio radio-info radio-sm"
+            checked={selectedGender === "female"}
+            onChange={() => onCheckboxChange("female")}
+          />
+        </label>
+      </div>
     </div>
   )
 }

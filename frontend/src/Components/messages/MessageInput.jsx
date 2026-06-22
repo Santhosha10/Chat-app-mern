@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { BsSend } from 'react-icons/bs';
-import useSendMessage from '../../hooks/useSendMessage';
+import { useState } from "react";
+import { BsSend } from "react-icons/bs";
+import useSendMessage from "../../hooks/useSendMessage";
 
 const MessageInput = () => {
   const [message, setMessage] = useState("");
@@ -15,23 +15,32 @@ const MessageInput = () => {
   };
 
   return (
-    <form className="px-4 py-2 bg-gray-800" onSubmit={handleSubmit}>
-      <div className="relative flex items-center">
-        <input
-          type="text"
-          className="w-full rounded-full bg-gray-700 text-white px-4 py-2 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+    <form onSubmit={handleSubmit}>
+      <div className="flex items-center gap-3">
+        <textarea
+          rows="1"
+          maxLength={2000}
+          className="app-input max-h-32 min-h-11 flex-1 resize-none rounded-md px-4 py-3 text-sm"
           placeholder="Type a message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
         />
         <button
           type="submit"
-          className="absolute right-0 flex items-center justify-center w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full text-white transition-colors duration-200"
+          disabled={loading || !message.trim()}
+          className="app-button-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-md disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Send message"
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
           ) : (
-            <BsSend className="text-lg" />
+            <BsSend className="text-lg" aria-hidden="true" />
           )}
         </button>
       </div>

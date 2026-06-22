@@ -13,9 +13,13 @@ const messageSchema= new mongoose.Schema({
     },
     message:{
         type:String,
-        required:true
+        required:true,
+        trim:true,
+        maxlength:2000
     }
 },{timestamps:true});
+
+messageSchema.index({ senderID: 1, receiverID: 1, createdAt: -1 });
 
 const Message = mongoose.model("Message",messageSchema);
 

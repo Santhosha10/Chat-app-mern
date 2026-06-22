@@ -1,43 +1,64 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import Messages from "./Messages";
 import MessageInput from "./MessageInput";
 import { TiMessage } from "react-icons/ti";
 import useConversation from "../../zustandStore/useConversation";
 import { useAuthContext } from "../../context/AuthContext";
+import { useSocketContext } from "../../context/SocketContext";
+import Avatar from "../Avatar";
+import { FiArrowLeft } from "react-icons/fi";
 
-const MessageContainer = () => {
+const MessageContainer = ({ className = "" }) => {
   const { selectedConversation, setSelectedConversation } = useConversation();
+  const { onlineUser } = useSocketContext();
+  const isOnline = selectedConversation && onlineUser.includes(selectedConversation._id);
 
   useEffect(() => {
     return () => setSelectedConversation(null);
   }, [setSelectedConversation]);
 
   return (
-    <div className="m-1 w-[950px] rounded-xl flex flex-col bg-gray-900 shadow-lg overflow-hidden">
+    <main className={`app-shell min-h-0 flex-1 flex-col ${className}`}>
       {!selectedConversation ? (
         <NoChatSelected />
       ) : (
         <>
-          {/* Header */}
-          <div className="bg-gray-800 p-4 flex items-center justify-between border-b border-gray-700">
-            <p className="text-gray-100 font-semibold text-lg">
-              Chatting with:{" "}
-              <span className="text-blue-400">{selectedConversation.fullName}</span>
-            </p>
-          </div>
+          <header className="app-panel flex items-center justify-between border-b px-3 py-3 sm:px-5 sm:py-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                className="icon-button md:hidden"
+                onClick={() => setSelectedConversation(null)}
+                aria-label="Back to inbox"
+              >
+                <FiArrowLeft className="h-5 w-5" />
+              </button>
+              <Avatar
+                src={selectedConversation.profilePic}
+                name={selectedConversation.fullName}
+                isOnline={Boolean(isOnline)}
+                size="lg"
+              />
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{selectedConversation.fullName}</p>
+                <p className="app-muted text-xs">{isOnline ? "Online" : "Offline"}</p>
+              </div>
+            </div>
+            <span className="app-panel-strong hidden rounded-md border px-3 py-1 text-xs font-medium sm:inline-flex">
+              Private chat
+            </span>
+          </header>
 
-          {/* Messages area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-900">
+          <div className="min-h-0 flex-1">
             <Messages />
           </div>
 
-          {/* Input */}
-          <div className="bg-gray-800 p-4 border-t border-gray-700">
+          <div className="app-panel border-t px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:p-4">
             <MessageInput />
           </div>
         </>
       )}
-    </div>
+    </main>
   );
 };
 
@@ -46,13 +67,13 @@ export default MessageContainer;
 const NoChatSelected = () => {
   const { authUser } = useAuthContext();
   return (
-    <div className="flex flex-col items-center justify-center h-[500px] text-center p-4 bg-gray-900 rounded-xl">
-      <TiMessage className="text-6xl text-gray-400 mb-4 animate-bounce" />
-      <p className="text-white text-xl font-semibold mb-2">
-        Welcome, {authUser.fullName}!
-      </p>
-      <p className="text-gray-400 text-md">
-        Select a chat on the left to start a conversation
+    <div className="flex h-full min-h-[60vh] flex-col items-center justify-center px-6 text-center md:min-h-screen">
+      <div className="app-panel mb-5 flex h-20 w-20 items-center justify-center rounded-md border">
+        <TiMessage className="app-accent text-5xl" />
+      </div>
+      <p className="mb-2 text-2xl font-semibold">Welcome, {authUser.fullName}</p>
+      <p className="app-muted max-w-md text-sm leading-6">
+        Select a contact to start a secure real-time conversation.
       </p>
     </div>
   );

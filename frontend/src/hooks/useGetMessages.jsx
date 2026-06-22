@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import useConversation from '../zustandStore/useConversation'
 import toast from "react-hot-toast";
+import { getMessagesByConversation } from '../services/messageService';
 
 
 const useGetMessages = () => {
@@ -9,13 +10,10 @@ const useGetMessages = () => {
     const {messages,setMessages,selectedConversation} = useConversation();
 
     useEffect(()=>{
-        const getMessage = async (message)=>{
+        const getMessage = async ()=>{
             setLoading(true)
             try {
-                const res = await fetch(`/api/messages/${selectedConversation._id}`);
-    
-                const data = await res.json();
-                if(data.error) throw new Error(data.error)
+                const data = await getMessagesByConversation(selectedConversation._id);
     
                 setMessages(data)
     

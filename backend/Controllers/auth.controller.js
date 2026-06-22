@@ -1,21 +1,48 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-import genrateTokenAndsetCookies from '../utils/generateToken.js';
+import generateTokenAndSetCookie from '../utils/generateToken.js';
+import { sendError, sendServerError } from '../utils/apiResponse.js';
+import { emailPattern, normalizeEmail, normalizeText, normalizeUsername, usernamePattern } from '../utils/validation.js';
 
 
 export const signup = async(req,res)=>{
     try{
-        const{fullName,username,password,confirmPassword,gender} = req.body;
+        const fullName = normalizeText(req.body.fullName);
+        const username = normalizeUsername(req.body.username);
+        const email = normalizeEmail(req.body.email);
+        const password = normalizeText(req.body.password);
+        const confirmPassword = normalizeText(req.body.confirmPassword);
+        const gender = normalizeText(req.body.gender);
+
+        if (!fullName || !username || !email || !password || !confirmPassword || !gender) {
+            return sendError(res, 400, "All fields are required")
+        }
+
+        if (!usernamePattern.test(username)) {
+            return sendError(res, 400, "Username must be 3-24 characters and only use lowercase letters, numbers, or underscores")
+        }
+
+        if (!emailPattern.test(email)) {
+            return sendError(res, 400, "Please enter a valid email address")
+        }
+
+        if (password.length < 6) {
+            return sendError(res, 400, "Password must be at least 6 characters")
+        }
 
         if(password !== confirmPassword){
-            return res.send.status(400).json({error:"Passwords don't match"})
+            return sendError(res, 400, "Passwords don't match")
         }
 
-        const user= await User.findOne({username});
-        if(user){
-            return res.send.status(400).json({error:"UserName exist"})
+        if (!["male", "female"].includes(gender)) {
+            return sendError(res, 400, "Please select a valid gender")
         }
-        // HASH PASSWORD HERE
+
+        const user= await User.findOne({$or:[{username},{email}]});
+        if(user){
+            return sendError(res, 409, user.username === username ? "Username already exists" : "Email already exists")
+        }
+
         const salt =await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password,salt);
 
@@ -25,60 +52,75 @@ export const signup = async(req,res)=>{
         const newUser = new User({
             fullName,
             username,
+            email,
             password:hashedPassword,
             gender,
             profilePic: gender === "male" ? boyProfilePic : girlProfilePic
         })
 
-        if(newUser){
-            genrateTokenAndsetCookies(newUser._id,res)
-            await newUser.save();
-            res.status(201).json({
-                _id:newUser._id,
-                fullName:newUser.fullName,
-                username:newUser.username,
-                profilePic:newUser.profilePic
-        })
-        }else{
-            return res.send.status(400).json({error:"UserName Invaild"})
-        }
+        generateTokenAndSetCookie(newUser._id,res)
+        await newUser.save();
+        res.status(201).json({
+            _id:newUser._id,
+            fullName:newUser.fullName,
+            username:newUser.username,
+            email:newUser.email,
+            profilePic:newUser.profilePic
+    })
 
     }catch(error){
-        console.log("Error in Loign Controller");
-        res.send(500).json({error:"Inside Server Error"})
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern || {})[0];
+            return sendError(res, 409, field === "email" ? "Email already exists" : "Username already exists")
+        }
+        return sendServerError(res, "signup", error)
     }
 }
 
 export const login = async(req,res)=>{
   try {
-    const {username,password} = req.body;
-    const user = await User.findOne({username});
+    const identifier = normalizeText(req.body.identifier || req.body.username).toLowerCase();
+    const password = normalizeText(req.body.password);
+
+    if (!identifier || !password) {
+        return sendError(res, 400, "Username or email and password are required")
+    }
+
+    const user = await User.findOne({
+        $or: [
+            { username: identifier },
+            { email: identifier }
+        ]
+    });
     const isPasswordCorrect = await bcrypt.compare(password,user?.password || "");
 
     if (!user || !isPasswordCorrect) {
-        return res.status(404).json({error:"Invaild userName or Password"})
+        return sendError(res, 401, "Invalid username/email or password")
     }
 
-    genrateTokenAndsetCookies(user._id,res);
-    res.status(201).json({
+    generateTokenAndSetCookie(user._id,res);
+    res.status(200).json({
         _id:user._id,
         fullName:user.fullName,
         username:user.username,
+        email:user.email,
         profilePic:user.profilePic
     })
 
   } catch (error) {
-    console.log("Error in Loign Controller");
-    res.send(500).json({error:"Inside Server Error"})
+    return sendServerError(res, "login", error)
   }
 }
 
 export const logout = (req,res)=>{
    try {
-    res.cookie("jwt","",{maxAge:0});
-    res.status(200).json({message:"LogOut Successfully"})
+    res.clearCookie("jwt",{
+        httpOnly:true,
+        sameSite:process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure:process.env.NODE_ENV === "production"
+    });
+    res.status(200).json({message:"Logged out successfully"})
    } catch (error) {
-    console.log("Error in Loign Controller");
-    res.send(500).json({error:"Inside Server Error"})
+    return sendServerError(res, "logout", error)
    }
 }

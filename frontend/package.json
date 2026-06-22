@@ -2,6 +2,7 @@
   "name": "viteapp",
   "private": true,
   "version": "0.0.0",
+  "description": "ChatWay realtime messaging frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",

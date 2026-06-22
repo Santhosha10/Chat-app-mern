@@ -1,41 +1,100 @@
-import { Server } from "socket.io";
-import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 import express from "express";
 
-const app = express();
+import connectToMongoDB, { getMongoHealth } from "./DB/mongoDB.js";
+import authRoutes from "./routes/auth.routes.js";
+import messageRoutes from "./routes/message.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import { app, server, getOnlineUserIds } from "./socket/socket.js";
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: [
-      "http://localhost:3000",
-      "https://chat-app-mern-s97e.onrender.com",
-    ],
-    methods: ["GET", "POST"],
-     credentials: true,
-  },
-});
+dotenv.config();
 
-export const getReceiverSocketId = (receiverId) => {
-  return userSocketMap[receiverId];
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PORT = process.env.PORT || 5000;
+const allowedOrigins = [process.env.CLIENT_ORIGIN, "http://localhost:3000"]
+  .filter(Boolean)
+  .join(",")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  try {
+    const { hostname } = new URL(origin);
+    if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+    if (
+      process.env.NODE_ENV === "production" &&
+      hostname.endsWith(".onrender.com")
+    )
+      return true;
+  } catch {
+    return false;
+  }
+
+  return false;
 };
 
-const userSocketMap = {}; 
+app.disable("x-powered-by");
+app.use(express.json({ limit: "100kb" }));
+app.use(cookieParser());
 
-io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
-  if (!userId) return; 
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (isOriginAllowed(origin)) {
+    res.header("Access-Control-Allow-Origin", origin || allowedOrigins[0]);
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 
-  userSocketMap[userId] = socket.id;
+app.get("/api/health", async (req, res) => {
+  const database = await getMongoHealth();
+  const isHealthy = database.status === "ok";
 
-  socket.emit("getOnlineUsers", Object.keys(userSocketMap));
-
-  socket.broadcast.emit("getOnlineUsers", Object.keys(userSocketMap));
-
-  socket.on("disconnect", () => {
-    delete userSocketMap[userId];
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "ok" : "degraded",
+    service: "chatway-api",
+    uptime: process.uptime(),
+    database,
+    timestamp: new Date().toISOString(),
   });
 });
 
-export { app, io, server };
+app.get("/api/socket-health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    onlineUsers: getOnlineUserIds().length,
+  });
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes);
+
+if (process.env.NODE_ENV === "production") {
+  const clientBuildPath = path.join(__dirname, "../frontend/dist");
+  app.use(express.static(clientBuildPath));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+}
+
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+await connectToMongoDB();
+
+server.listen(PORT, () => {
+  console.log(`ChatWay API running on port ${PORT}`);
+});

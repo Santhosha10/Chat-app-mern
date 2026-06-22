@@ -1,24 +1,25 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
+import { sendError, sendServerError } from '../utils/apiResponse.js';
 
 const protectRoute = async (req,res,next)=>{
     try {
         const token = req.cookies.jwt;
 
         if(!token){
-            return res.status(401).json({error:"Unauthorized"})
+            return sendError(res, 401, "Authentication required")
         }
 
         const decoded =jwt.verify(token,process.env.JWT_SECRET);
 
         if(!decoded){
-            return res.status(401).json({error:"Unauthorized-Token"})
+            return sendError(res, 401, "Invalid authentication token")
         }
 
         const user = await User.findById(decoded.userId).select("-password");
 
         if(!user){
-            return res.status(401).json({error:"User Not Found"})
+            return sendError(res, 401, "User not found")
         }
 
         req.user = user;
@@ -26,8 +27,10 @@ const protectRoute = async (req,res,next)=>{
         next();
 
     }catch(error) {
-        console.log(error);
-        res.send(500).json({error:"Inside Server Error"}) 
+        if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+            return sendError(res, 401, "Session expired. Please log in again")
+        }
+        return sendServerError(res, "protectRoute", error)
     };
 }
 
