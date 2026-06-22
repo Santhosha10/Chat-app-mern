@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import { app, server, getOnlineUserIds } from "./socket/socket.js";
+import { createAvatarSvg } from "./utils/avatar.js";
 
 dotenv.config();
 
@@ -75,6 +76,14 @@ app.get("/api/socket-health", (req, res) => {
     status: "ok",
     onlineUsers: getOnlineUserIds().length,
   });
+});
+
+app.get("/api/avatar/:seed", (req, res) => {
+  res
+    .status(200)
+    .type("image/svg+xml")
+    .set("Cache-Control", "public, max-age=31536000, immutable")
+    .send(createAvatarSvg(req.params.seed));
 });
 
 app.use("/api/auth", authRoutes);

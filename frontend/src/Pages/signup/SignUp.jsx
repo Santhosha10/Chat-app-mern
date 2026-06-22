@@ -45,7 +45,7 @@ const SignUp = () => {
             <label className="mb-2 block text-sm font-medium">Full name</label>
             <input
               type="text"
-              placeholder="Sridhar Kumar"
+              placeholder="Enter your Name"
               className="app-input h-11 w-full rounded-md px-3 text-sm"
               value={inputs.fullName}
               onChange={(e) => setInputs({ ...inputs, fullName: e.target.value })}
@@ -56,7 +56,7 @@ const SignUp = () => {
             <label className="mb-2 block text-sm font-medium">Username</label>
             <input
               type="text"
-              placeholder="sridhar_01"
+              placeholder="Enter unique user name"
               className="app-input h-11 w-full rounded-md px-3 text-sm"
               value={inputs.username}
               onChange={(e) => setInputs({ ...inputs, username: e.target.value })}
@@ -79,7 +79,7 @@ const SignUp = () => {
               <label className="mb-2 block text-sm font-medium">Password</label>
               <input
                 type="password"
-                placeholder="Min 6 characters"
+                placeholder="Min 9 characters"
                 className="app-input h-11 w-full rounded-md px-3 text-sm"
                 value={inputs.password}
                 onChange={(e) => setInputs({ ...inputs, password: e.target.value })}

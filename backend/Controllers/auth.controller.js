@@ -3,7 +3,15 @@ import bcrypt from 'bcryptjs';
 import generateTokenAndSetCookie from '../utils/generateToken.js';
 import { sendError, sendServerError } from '../utils/apiResponse.js';
 import { emailPattern, normalizeEmail, normalizeText, normalizeUsername, usernamePattern } from '../utils/validation.js';
+import { getAvatarPath } from '../utils/avatar.js';
 
+const serializeUser = (user) => ({
+    _id:user._id,
+    fullName:user.fullName,
+    username:user.username,
+    email:user.email,
+    profilePic:user.profilePic || getAvatarPath(user.username || user.fullName)
+});
 
 export const signup = async(req,res)=>{
     try{
@@ -46,27 +54,18 @@ export const signup = async(req,res)=>{
         const salt =await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password,salt);
 
-        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?${username}`;
-        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?${username}`;
-
         const newUser = new User({
             fullName,
             username,
             email,
             password:hashedPassword,
             gender,
-            profilePic: gender === "male" ? boyProfilePic : girlProfilePic
+            profilePic: getAvatarPath(username)
         })
 
         generateTokenAndSetCookie(newUser._id,res)
         await newUser.save();
-        res.status(201).json({
-            _id:newUser._id,
-            fullName:newUser.fullName,
-            username:newUser.username,
-            email:newUser.email,
-            profilePic:newUser.profilePic
-    })
+        res.status(201).json(serializeUser(newUser))
 
     }catch(error){
         if (error.code === 11000) {
@@ -99,17 +98,19 @@ export const login = async(req,res)=>{
     }
 
     generateTokenAndSetCookie(user._id,res);
-    res.status(200).json({
-        _id:user._id,
-        fullName:user.fullName,
-        username:user.username,
-        email:user.email,
-        profilePic:user.profilePic
-    })
+    res.status(200).json(serializeUser(user))
 
   } catch (error) {
     return sendServerError(res, "login", error)
   }
+}
+
+export const getMe = (req,res)=>{
+   try {
+    res.status(200).json(serializeUser(req.user))
+   } catch (error) {
+    return sendServerError(res, "getMe", error)
+   }
 }
 
 export const logout = (req,res)=>{

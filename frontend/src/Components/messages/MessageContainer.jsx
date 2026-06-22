@@ -6,12 +6,19 @@ import useConversation from "../../zustandStore/useConversation";
 import { useAuthContext } from "../../context/AuthContext";
 import { useSocketContext } from "../../context/SocketContext";
 import Avatar from "../Avatar";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiSearch } from "react-icons/fi";
 
 const MessageContainer = ({ className = "" }) => {
-  const { selectedConversation, setSelectedConversation } = useConversation();
+  const {
+    selectedConversation,
+    setSelectedConversation,
+    typingByUser,
+    messageSearch,
+    setMessageSearch
+  } = useConversation();
   const { onlineUser } = useSocketContext();
   const isOnline = selectedConversation && onlineUser.includes(selectedConversation._id);
+  const isTyping = selectedConversation && typingByUser[selectedConversation._id];
 
   useEffect(() => {
     return () => setSelectedConversation(null);
@@ -41,12 +48,18 @@ const MessageContainer = ({ className = "" }) => {
               />
               <div className="min-w-0">
                 <p className="truncate font-semibold">{selectedConversation.fullName}</p>
-                <p className="app-muted text-xs">{isOnline ? "Online" : "Offline"}</p>
+                <p className="app-muted text-xs">{isTyping ? "Typing..." : isOnline ? "Online" : "Offline"}</p>
               </div>
             </div>
-            <span className="app-panel-strong hidden rounded-md border px-3 py-1 text-xs font-medium sm:inline-flex">
-              Private chat
-            </span>
+            <label className="app-panel-strong hidden h-10 w-56 items-center gap-2 rounded-md border px-3 text-sm md:flex">
+              <FiSearch className="app-muted h-4 w-4" />
+              <input
+                className="min-w-0 flex-1 bg-transparent outline-none"
+                placeholder="Search messages"
+                value={messageSearch}
+                onChange={(e) => setMessageSearch(e.target.value)}
+              />
+            </label>
           </header>
 
           <div className="min-h-0 flex-1">

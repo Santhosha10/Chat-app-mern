@@ -3,11 +3,18 @@ import { useSocketContext } from "../context/SocketContext";
 import Avatar from "./Avatar";
 
 const Conversation = ({ conversation, lastIdx }) => {
-  const { selectedConversation, setSelectedConversation } = useConversation();
+  const {
+    selectedConversation,
+    setSelectedConversation,
+    unreadByConversation,
+    typingByUser
+  } = useConversation();
   const { onlineUser } = useSocketContext();
 
   const isSelected = selectedConversation?._id === conversation._id;
   const isOnline = onlineUser.includes(conversation?._id);
+  const unreadCount = unreadByConversation[conversation._id] || 0;
+  const isTyping = typingByUser[conversation._id];
 
   return (
     <>
@@ -31,9 +38,14 @@ const Conversation = ({ conversation, lastIdx }) => {
             {conversation.fullName}
           </p>
           <p className={`truncate text-xs ${isSelected ? "opacity-80" : "app-muted"}`}>
-            {isOnline ? "Online now" : "Offline"}
+            {isTyping ? "Typing..." : isOnline ? "Online now" : "Offline"}
           </p>
         </div>
+        {unreadCount > 0 && (
+          <span className="app-button-primary flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-bold">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
       </div>
 
       {!lastIdx && <div className="mx-3 border-b" style={{ borderColor: "var(--app-border)" }}></div>}

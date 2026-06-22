@@ -1,18 +1,45 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BsSend } from "react-icons/bs";
 import useSendMessage from "../../hooks/useSendMessage";
+import { useSocketContext } from "../../context/SocketContext";
+import useConversation from "../../zustandStore/useConversation";
 
 const MessageInput = () => {
   const [message, setMessage] = useState("");
   const { loading, sendMessage } = useSendMessage();
+  const { socket } = useSocketContext();
+  const { selectedConversation } = useConversation();
+  const typingTimeoutRef = useRef(null);
+
+  const emitTypingStop = useCallback(() => {
+    if (!selectedConversation?._id) return;
+    socket?.emit("typing:stop", { receiverId: selectedConversation._id });
+  }, [selectedConversation?._id, socket]);
+
+  const handleMessageChange = (e) => {
+    setMessage(e.target.value);
+    if (!selectedConversation?._id) return;
+
+    socket?.emit("typing:start", { receiverId: selectedConversation._id });
+    window.clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = window.setTimeout(emitTypingStop, 900);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
+    emitTypingStop();
     await sendMessage(message);
     setMessage("");
   };
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(typingTimeoutRef.current);
+      emitTypingStop();
+    };
+  }, [emitTypingStop]);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -23,7 +50,7 @@ const MessageInput = () => {
           className="app-input max-h-32 min-h-11 flex-1 resize-none rounded-md px-4 py-3 text-sm"
           placeholder="Type a message..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleMessageChange}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();

@@ -10,3 +10,23 @@ export const sendMessageToConversation = (conversationId, message) => {
     body: JSON.stringify({ message }),
   });
 };
+
+export const toggleMessageReaction = (messageId, emoji) => {
+  return apiRequest(`/api/messages/${messageId}/reaction`, {
+    method: "PATCH",
+    body: JSON.stringify({ emoji }),
+  });
+};
+
+export const editMessageById = (messageId, message) => {
+  return apiRequest(`/api/messages/${messageId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ message }),
+  });
+};
+
+export const deleteMessageById = (messageId) => {
+  return apiRequest(`/api/messages/${messageId}`, {
+    method: "DELETE",
+  });
+};

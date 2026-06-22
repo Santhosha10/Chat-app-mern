@@ -1,5 +1,6 @@
 import express from 'express'
-import { signup,login,logout } from '../Controllers/auth.controller.js';
+import { signup,login,logout,getMe } from '../Controllers/auth.controller.js';
+import protectRoute from '../middleware/protectRoute.js';
 
 const rotuer = express.Router();
 
@@ -12,6 +13,9 @@ rotuer.post('/login',login);
 
 //Logout route
 rotuer.post('/logout',logout);
+
+// Current authenticated user
+rotuer.get('/me',protectRoute,getMe);
 
 
 export default rotuer;

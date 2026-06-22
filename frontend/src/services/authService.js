@@ -19,3 +19,7 @@ export const logoutUser = () => {
     method: "POST",
   });
 };
+
+export const getCurrentUser = () => {
+  return apiRequest("/api/auth/me");
+};

@@ -16,7 +16,27 @@ const messageSchema= new mongoose.Schema({
         required:true,
         trim:true,
         maxlength:2000
-    }
+    },
+    editedAt:{
+        type:Date,
+        default:null
+    },
+    deletedAt:{
+        type:Date,
+        default:null
+    },
+    reactions:[{
+        userId:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"User",
+            required:true
+        },
+        emoji:{
+            type:String,
+            required:true,
+            maxlength:8
+        }
+    }]
 },{timestamps:true});
 
 messageSchema.index({ senderID: 1, receiverID: 1, createdAt: -1 });
